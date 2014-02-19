@@ -1,0 +1,22 @@
+{
+  "name": "Hemlock",
+  "version": "0",
+  "manifest_version" : 2,
+  "description": "Simplify by removing the unecessary influences on your life.",
+  "browser_action": {
+    "default_icon": "icon.png"
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": false
+  },
+  "content_scripts":  [
+    {
+      "matches": ["http://*/*"],
+      "css": ["style.css"],
+      "js": ["jquery.js", "contentScript.js"]
+    }
+  ]
+}
