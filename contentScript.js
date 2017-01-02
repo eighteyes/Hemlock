@@ -3,6 +3,14 @@
 console.log('hi from Hemlock');
 chrome.runtime.sendMessage( {count : 666} );
 
+chrome.devtools.panels.create("Font Picker",
+                                   "FontPicker.png",
+                                   "Panel.html"
+                                   function(panel) { ... });
+
+ 
+jsyaml.load
+
 var badList = ['Celebrities', 'Kardashian', 'Mike Rowe', 'Neil Patrick Harris', '92010', 'Kayne West','Simon Cowell', 'George Zimmerman', 'Paris Hilton', 'Beyonce', 'Obama', 'Zuckerberg', 'al-Qaida', 'Philip Seymour Hoffman', 'Russell Brand', 'Miley Cyrus', 'Justin Bieber', 'Tom Cruise'];
 var badUrls = [];
 badList.forEach( function(t, i, a) { badUrls[i] = t.replace(new RegExp(' ', 'g'), '-'); } );
@@ -41,7 +49,9 @@ if (matches) {
 
 // this is where they die
 //oh shit
-if ( location.href.match(badUrls) ) {
+var url = location.href;
+var afterTld = url.substring( url.indexOf('/', 8) );
+if ( afterTld.match(badUrls) ) {
   alert('Too deep already');
 }
 // images
@@ -49,7 +59,7 @@ $('img').filter( function() {
   return parseAttributes( this );
 }).remove();
 
-//headlines and articles, be ruthless
+//headlines, links and articles, be ruthless
 $('h1,h2,h3,h4,h5,h6,p,a,span').filter( function() {
   return $(this).text().match(badNames);
 }).remove();
@@ -63,4 +73,3 @@ $('a').filter( function () {
 $('div').contents().filter(function() {
   return this.nodeType === 3 && this.textContent.match(badNames);
 }).remove();
-

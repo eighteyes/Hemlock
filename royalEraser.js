@@ -23,9 +23,6 @@ function parseAttributes( domObj ){
 
 var pyre = [];
 
-//TODO: See if page body has any celebs in it before diving in.
-// Determine if it's in textContent or attribute
-
 //oh shit
 if ( location.href.match(badUrls) ) {
   alert('Too deep already');

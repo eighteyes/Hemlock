@@ -16,7 +16,11 @@
     {
       "matches": ["http://*/*"],
       "css": ["style.css"],
-      "js": ["jquery.js", "contentScript.js"]
+      "js": ["jquery.js", "js-yaml.js", "contentScript.js"]
     }
-  ]
+  ],
+  "options_ui": {
+    "page": "panel.html",
+    "chrome_style": true
+  }
 }
