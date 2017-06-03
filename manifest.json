@@ -14,8 +14,13 @@
   },
   "content_scripts":  [
     {
-      "matches": ["http://*/*"],
+      "matches": ["http://*/*","https://*/*"],
       "css": ["style.css"],
+<<<<<<< HEAD
+      "js": ["jquery.js", "lodash.js", "contentScript.js"]
+    }
+  ]
+=======
       "js": ["jquery.js", "js-yaml.js", "contentScript.js"]
     }
   ],
@@ -23,4 +28,5 @@
     "page": "panel.html",
     "chrome_style": true
   }
+>>>>>>> e86a87d2793904564e152f49f89ec8aca9c85f19
 }
