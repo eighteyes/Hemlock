@@ -1,19 +1,10 @@
-
-
 console.log('hi from Hemlock');
-chrome.runtime.sendMessage( {count : 666} );
+chrome.runtime.sendMessage({ count: 666 });
 
-chrome.devtools.panels.create("Font Picker",
-                                   "FontPicker.png",
-                                   "Panel.html"
-                                   function(panel) { ... });
+var badList = ['Celebrities', 'Kardashian', 'Mike Rowe', 'Neil Patrick Harris', '92010', 'Kayne West', 'Simon Cowell', 'George Zimmerman', 'Paris Hilton', 'Beyonce', 'Obama', 'Zuckerberg', 'al-Qaida', 'Philip Seymour Hoffman', 'Russell Brand', 'Miley Cyrus', 'Justin Bieber', 'Tom Cruise', 'Trump'];
 
- 
-jsyaml.load
-
-var badList = ['Celebrities', 'Kardashian', 'Mike Rowe', 'Neil Patrick Harris', '92010', 'Kayne West','Simon Cowell', 'George Zimmerman', 'Paris Hilton', 'Beyonce', 'Obama', 'Zuckerberg', 'al-Qaida', 'Philip Seymour Hoffman', 'Russell Brand', 'Miley Cyrus', 'Justin Bieber', 'Tom Cruise'];
 var badUrls = [];
-badList.forEach( function(t, i, a) { badUrls[i] = t.replace(new RegExp(' ', 'g'), '-'); } );
+badList.forEach(function(t, i, a) { badUrls[i] = t.replace(new RegExp(' ', 'g'), '-'); });
 
 var badRegexStr = badList.join('|');
 var badUrlsRegexStr = badUrls.join('|');
@@ -22,10 +13,10 @@ var badNames = new RegExp(badRegexStr, "ig");
 var badUrls = new RegExp(badUrlsRegexStr, 'ig');
 
 // find badness in attributes
-function parseAttributes( domObj ){
+function parseAttributes(domObj) {
   var atts = domObj.attributes;
-  for (var i=0, l=atts.length; i<l; i++){
-    if ( atts[i].value.match(badNames) || atts[i].value.match(badUrls) ){
+  for (var i = 0, l = atts.length; i < l; i++) {
+    if (atts[i].value.match(badNames) || atts[i].value.match(badUrls)) {
       console.log("removing:", atts[i].value)
       return true;
     }
@@ -36,37 +27,37 @@ function parseAttributes( domObj ){
 console.log("regex:", badNames, badUrls);
 matches = document.body.innerText.match(badNames);
 if (matches) {
-    var payload = {
-        count: matches.length // Pass the number of matches back.
-    };
-    chrome.runtime.sendMessage(payload, function(response) {
-      console.log("CS", response.farewell);
-    });
-    // .sendRequest(payload, function(response) {});
-    console.log('MATCH', matches);
+  var payload = {
+    count: matches.length // Pass the number of matches back.
+  };
+  chrome.runtime.sendMessage(payload, function(response) {
+    console.log("CS", response.farewell);
+  });
+  // .sendRequest(payload, function(response) {});
+  console.log('MATCH', matches);
 }
 
 
 // this is where they die
 //oh shit
 var url = location.href;
-var afterTld = url.substring( url.indexOf('/', 8) );
-if ( afterTld.match(badUrls) ) {
+var afterTld = url.substring(url.indexOf('/', 8));
+if (afterTld.match(badUrls)) {
   alert('Too deep already');
 }
 // images
-$('img').filter( function() {
-  return parseAttributes( this );
+$('img').filter(function() {
+  return parseAttributes(this);
 }).remove();
 
 //headlines, links and articles, be ruthless
-$('h1,h2,h3,h4,h5,h6,p,a,span').filter( function() {
+$('h1,h2,h3,h4,h5,h6,p,a,span').filter(function() {
   return $(this).text().match(badNames);
 }).remove();
 
 //links
-$('a').filter( function () {
-  return parseAttributes( this );
+$('a').filter(function() {
+  return parseAttributes(this);
 }).remove();
 
 //divs are a pain
