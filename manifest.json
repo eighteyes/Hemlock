@@ -1,7 +1,7 @@
 {
   "name": "Hemlock",
   "version": "0",
-  "manifest_version" : 2,
+  "manifest_version": 2,
   "description": "Simplify by removing the unecessary influences on your life.",
   "browser_action": {
     "default_icon": "icon.png"
@@ -12,21 +12,13 @@
     ],
     "persistent": false
   },
-  "content_scripts":  [
-    {
-      "matches": ["http://*/*","https://*/*"],
-      "css": ["style.css"],
-<<<<<<< HEAD
-      "js": ["jquery.js", "lodash.js", "contentScript.js"]
-    }
-  ]
-=======
-      "js": ["jquery.js", "js-yaml.js", "contentScript.js"]
-    }
-  ],
+  "content_scripts": [{
+    "matches": ["http://*/*", "https://*/*"],
+    "css": ["style.css"],
+    "js": ["jquery.js", "js-yaml.js", "contentScript.js"]
+  }],
   "options_ui": {
     "page": "panel.html",
     "chrome_style": true
   }
->>>>>>> e86a87d2793904564e152f49f89ec8aca9c85f19
 }
