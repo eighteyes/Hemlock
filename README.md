@@ -1,6 +1,12 @@
 Hemlock
 =======
 
-Chrome Extension to Remove Unwanted People from your Internet Expeience
+Chrome Extension to Remove Unwanted People from your Internet Experience.
 
-In Extreme Beta. There are no options pages, just basic functionality. 
+New Features
+Supports page updates. 
+
+In Extreme Beta. 
+
+Upcoming Features
+Options pages.
