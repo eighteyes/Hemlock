@@ -1,12 +1,12 @@
 console.log('hi from Hemlock');
 // chrome.runtime.sendMessage( {count : 666} );
 var tv = ['Game Of Thrones', 'Orange Is The New Black', 'The Big Bang Theory', 'Grey\'s Anatomy']
-var politics = ['Clinton', 'Trump', 'Democrat', 'Republican']
-var terror = ['ISIS', 'al-qaida', '9/11', '911']
+var politics = ['Clinton', 'Trump', 'Democrat', 'Republican', 'GOP','Jeff Sessions']
+var terror = ['ISIS']
 var tech = ['Zuckerberg', 'Steve Jobs', 'Elon Musk', 'Reed Hastings', 'Reid Hoffman', 'Peter Thiel', 'Jack Dorsey', 'Marc Andreessen', 'Larry Ellison', 'Tim Cook', 'Sergey Brin', 'Larry Page', 'Jeff Bezos']
 var crap = ['Kardashian', 'Selena Gomez', 'Stephen Colbert', 'Trevor Noah', 'Katy Perry', 'Seth Rogan', 'Jim Parsons', 'Mike Rowe', 'Neil Patrick Harris', 'Kayne', 'Simon Cowell', 'Hilton', 'Beyonce',
-  'Robert Downey Jr.', 'Amy Schumer', 'Drake', 'Adele', 'Beyoncé', 'The Rock', 'Kanye', 'Nicki Minaj', 'Jennifer Lawrence',
-  'Taylor Swift', 'Jenner', 'Nicolas Cage', 'Russell Brand', 'Miley Cyrus', 'Justin Bieber', 'Tom Cruise', 'Oprah'
+  'Robert Downey Jr.', 'Amy Schumer', 'Drake', 'Adele', 'Beyoncé', 'Kanye', 'Nicki Minaj', 'Jennifer Lawrence',
+  'Taylor Swift', 'Jenner', 'Nicolas Cage', 'Russell Brand', 'Miley Cyrus', 'Justin Bieber', 'Tom Cruise', 'Oprah','Kushner','Ivanka'
 ];
 
 var badList = [].concat(tv, politics, terror, crap, tech);
