@@ -4,28 +4,45 @@
     <meta charset="utf-8">
     <title>Test Page</title>
   </head>
+  <style type="text/css">
+    h1 button {
+      font-size: 1em;
+      min-width: 40px;
+      min-height: 1em;
+      margin-right: 0.3em;
+    }
+    input {
+      width: 200px;
+    }
+    body {
+      position: relative;
+    }
+    #save {
+      position: absolute;
+      top: 0px;
+      right: 0px;
+    }
+  </style>
   <body>
 
     <div id="container">
-      <div class="section">
+
+      <div class="section" id="entertainment">
         <h1>Entertainment</h1>
-        <div class="item"><input type="text"><button></button></div>
       </div>
-      <div class="section">
+
+      <div class="section" id="politics">
         <h1>Politics</h1>
-        <div class="item"><input type="text"><button></button></div>
       </div>
-      <div class="section">
+
+      <div class="section" id="tech">
         <h1>Technology</h1>
-        <div class="item"><input type="text"><button></button></div>
       </div>
-      <div class="section">
-        <h1></h1>
-        <div class="item"><input type="text"><button></button></div>
-      </div>
-      </div>
+
+    </div>
     <button id="save">Save</button>
 
     <script src="panel.js"></script>
+    <script src="jquery.js"></script>
   </body>
 </html>

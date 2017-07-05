@@ -12,10 +12,13 @@
     ],
     "persistent": false
   },
+  "permissions": [
+    "storage"
+  ],
   "content_scripts": [{
     "matches": ["http://*/*", "https://*/*"],
     "css": ["style.css"],
-    "js": ["jquery.js", "js-yaml.js", "contentScript.js"]
+    "js": ["jquery.js", "lodash.js", "js-yaml.js", "contentScript.js"]
   }],
   "options_ui": {
     "page": "panel.html",
