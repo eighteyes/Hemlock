@@ -1,12 +1,23 @@
-Hemlock
+# Hemlock 🍃🍺
 =======
+#### In Extreme Beta. 
 
-Chrome Extension to Remove Unwanted People from your Internet Experience.
+Chrome Extension to Remove Unwanted Entities from your Internet Experience.
 
-New Features
-Supports page updates. 
+```
+git clone http://github.com/eighteyes/hemlock
+# Chrome Extensions > Load Unpacked Directory > find local directory
+```
+At least until store.
 
-In Extreme Beta. 
+Check the options page for the ability to change / delete some suggested defaults. 
 
-Upcoming Features
-Options pages.
+## Feature Suggestions?
+
+Submit an issue. Ty.
+
+## Bugs
+
+If you find a website where this doesn't filter, please submit an issue.
+
+
