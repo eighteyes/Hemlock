@@ -2,7 +2,7 @@
 =======
 #### In Extreme Beta. 
 
-Chrome Extension to Remove Unwanted Entities from your Internet Experience.
+Chrome Extension to Censor People from your Internet Experience.
 
 ```
 git clone http://github.com/eighteyes/hemlock

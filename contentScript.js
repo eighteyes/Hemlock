@@ -1,116 +1,72 @@
-console.log('hi from Hemlock');
-// chrome.runtime.sendMessage( {count : 666} );
-var tv = ['Game Of Thrones', 'Orange Is The New Black', 'The Big Bang Theory', 'Grey\'s Anatomy', 'NFL'];
-var politics = ['Clinton', 'Trump', 'Democrat', 'Republican', 'GOP','DNC', 'Jeff Sessions','Paul Ryan','Mike Pence'];
-var terror = ['ISIS']
-var tech = ['Zuckerberg', 'Facebook', 'Steve Jobs', 'Elon Musk', 'Reed Hastings', 'Reid Hoffman', 'Peter Thiel', 'Jack Dorsey',
-            'Marc Andreessen', 'Larry Ellison', 'Tim Cook', 'Sergey Brin', 'Larry Page', 'Jeff Bezos']
-var crap = ['Kardashian', 'Selena Gomez', 'Stephen Colbert', 'Trevor Noah', 'Katy Perry', 'Seth Rogan', 'Jim Parsons', 
-            'Mike Rowe', 'Neil Patrick Harris', 'Kayne', 'Simon Cowell', 'Hilton', 'Beyonce','Mark Cuban',
-  'Robert Downey', 'Amy Schumer', 'Drake', 'Adele', 'Beyoncé', 'Kanye', 'Nicki Minaj', 'Jennifer Lawrence',
-  'Taylor Swift', 'Jenner', 'Nicolas Cage', 'Russell Brand', 'Miley Cyrus', 'Justin Bieber', 'Tom Cruise', 'Oprah',
-            'Kushner','Ivanka'
-];
 
-var badList = [].concat(tv, politics, terror, crap, tech) 
-// var bad = {
-//   list:[].concat(tv, politics, terror, crap, tech),
-//   urls: bad.list.forEach(function(t, i, a) { badUrls[i] = t.replace(new RegExp(' ', 'g'), '-'); }),
-
-
-// }
-var badUrls = [];
-badList.forEach
-var badRegexStr = badList.join('|');
-var badUrlsRegexStr = badUrls.join('|');
-
-var badNames = new RegExp(badRegexStr, "ig");
-var badUrls = new RegExp(badUrlsRegexStr, 'ig');
-
-
-chrome.storage.sync.get(null, function(names){
-  console.log('|=|_ > Blocks:', names);
+// onready
+$(function () {
   
-  // if there ain't nothing use what we got
-  if ( !_.has(names, 'tech')){
-    chrome.storage.sync.set({
-      entertainment: [].concat(tv, terror, crap),
-      politics: politics,
-      tech: tech,
-    });
-  
+  // names and urls of offenders
+  var bads = populateList();
+
+  if (location.href.match(bads.urls)) {
+    log('Already present in hell');
   }
 
-// otherwise use stored
-
-  badList = _.concat(names.entertainment, names.politics, names.tech);
-  console.log(badList, _.values(names))
-  badUrls = [];
-  
-  // replace spaces with - for urls
-  badList.forEach(function(t, i, a) { badUrls[i] = t.replace(new RegExp(' ', 'g'), '-'); });
-
-  badRegexStr = badList.join('|');
-  badUrlsRegexStr = badUrls.join('|');
-
-  badNames = new RegExp(badRegexStr, "ig");
-  badUrls = new RegExp(badUrlsRegexStr, 'ig');
-
-  var count = 0;
-
-  console.log("regex:", badNames, badUrls);
-  matches = document.body.innerText.match(badNames);
+  // do we find the poop anywhere on page?
+  log("Searching for", bads);
+  matches = document.body.innerText.match(bads.names);
   if (matches) {
-    // .sendRequest(payload, function(response) {});
-    console.log('MATCH', matches);
-    runBaseFilter();
+    log('Text MATCH', matches);
+    runBaseFilter(bads);
   }
+  
+  // stop poop from landing on the page
+  runMutateFilter(bads);
+})
+// #end main
 
-
-
-
-
-  // this is where they die
-  //oh shit
-  if (location.href.match(badUrls)) {
-    console.error('Too deep already');
-  }
-
-  // onready
-  $(function() {
-    setTimeout(runBaseFilter, 10)
-
-    var count = 0;
-
-    console.log("regex:", badNames, badUrls);
-    matches = document.body.innerText.match(badNames);
-    if (matches) {
-      // .sendRequest(payload, function(response) {});
-      console.log('MATCH', matches);
-      runBaseFilter();
-    }
-
-  })
-
-  // finish drawing
+function runMutateFilter(bads){
   
   // define what element should be observed by the observer
   // and what types of mutations trigger the callback
+  MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+  
+  var observer = new MutationObserver(function (mutations, observer) {
+    // fired when a mutation occurs
+    // log(mutations, observer);
+    mutations.forEach(function (m) {
+      // log(m)
+      if (m.type === 'attributes' && (m.attributeName == 'href' || m.attributeName == 'data-url') && m.target.tagName !== "HTML") {
+        if (!_.isUndefined(m.target.text) && !_.isNull(m.target.text.match(bads.urls)) && m.target.text.match(bads.urls).length > 0) {
+          log('mutation attribute ->>>', m.target.text.match(bads.names));
+          removeTarget(m);
+        }
+      } else if (m.attributeName === 'class') {
+        if (!_.isUndefined(m.target.text) && !_.isNull(m.target.text.match(bads.names)) && m.target.text.match(bads.names)) {
+          log('mutation class ->>>', m.target.text.match(bads.names));
+          removeTarget(m);
+        }
+      } else if (!_.isNull(m.target.innerHTML.match(bads.urls)) && !_.isNull(m.target.innerText.match(bads.names)) && (m.target.innerHTML.match(bads.urls).length > 0 || m.target.innerText.match(bads.names).length > 0)) {
+        if (_.isNull(m.target.tagName.match(/BODY|SCRIPT/))) {
+          log('mutation inner =>>>', m.target, m.target.innerHTML.match(bads.urls), m.target.innerText.match(bads.names));
+          removeTarget(m);
+        }
+      }
+    })
+  });
+  
+  // setup watcher for changes
   observer.observe(document, {
     subtree: true,
     attributes: true
-      //...
+    //...
   });
-
-})
-
+}
 
 // find badness in attributes
-function parseAttributes(domObj) {
+function parseAttributes(domObj, matchObj) {
   var atts = domObj.attributes;
   for (var i = 0, l = atts.length; i < l; i++) {
-    if (atts[i].value.match(badNames) || atts[i].value.match(badUrls)) {
-      console.log("removing:", atts[i].value)
+    var m = atts[i].value.match(matchObj.names) || atts[i].value.match(matchObj.urls);
+    if (m) {
+      log("removing on attr:", atts[i].value, m)
       return true;
     }
   }
@@ -122,42 +78,140 @@ function parseAttributes(domObj) {
 function removeTarget(m) {
   try {
     m.target.parentNode.removeChild(m.target);
-    count++;
-    chrome.runtime.sendMessage({ count: count });
+    log('removeNode',m)
+    incCounter();
   } catch (e) {
-    console.error(m)
+    console.error(e, m)
   }
 }
 
-function runBaseFilter() {
+
+function runBaseFilter(filters) {
+  var count = 0;
+  if  ( !filters.hasOwnProperty('urls') ){
+    error('No Filters Setup')
+  }
+  
   // images
-  $('img').filter(function() {
-    return parseAttributes(this);
+  var badImgs = $('img').filter(function () {
+    return parseAttributes(this, filters);
   }).remove();
-
-  //headlines and articles, be ruthless
-  var l = $('h1,h2,h3,h4,h5,h6,p,a,span,strong').filter(function() {
-    return $(this).text().match(badNames);
-  }).remove();
-
-  count += l.length;
-
+  
   //links
-  var badLinks = $('a,div').filter(function() {
-    return parseAttributes(this);
+  var badLinks = $('a,div').filter(function () {
+    return parseAttributes(this, filters);
   });
-
-  badLinks.parent('article').remove();
+  
+  // hn
+  badLinks.parents('tr:first').remove();
   badLinks.remove();
-
-  count += badLinks.length;
-
+  
+  
+  var headClean = [];
   //divs are a pain
-  l = $('div').contents().filter(function() {
-    return this.nodeType === 3 && this.textContent.match(badNames);
+  l = $('div').contents().filter(function () {
+    // is this a textnode and does it match?
+    if ( this.nodeType === 3 ){
+      var m = this.textContent.match(badNames)
+      if (m){
+        headClean.push([ this.textContent, m[0] ])
+      }
+      return m;
+    }
+    return false;
+    
   }).remove();
-  count += l.length;
+  
+  
+  //headlines and articles, be ruthless
+  var l = $('h1,h2,h3,h4,h5,h6,p,a,span,strong').filter(function () {
+    var m = $(this).text().match(badNames);
+    if (m){
+      headClean.push([ $(this).text(), m[0] ])
+      return m
+    }
+    return false
+  }).remove();
 
-
+    
+  log('Last Clean', headClean)
+  
+  count += headClean.length;
+  count += badLinks.length;
+  count += badImgs.length;
+  
   chrome.runtime.sendMessage({ count: count });
 }
+  
+  
+  
+  function setSavedList(list){
+    chrome.storage.sync.set(list);
+  }
+  function getSavedList(cb){
+    chrome.storage.sync.get(null, function (list) {
+      log('|=|_ > Saved 🍃:', list);
+      
+      cb(list)
+      
+    });
+  }
+
+
+// add the icon to logs
+function log(l){
+  var a = Array.from(arguments);
+  a.unshift('🍃')
+  console.log.apply(null, a )
+}
+
+function error(l){
+  var a = Array.from(arguments);
+  a.unshift('🍁')
+  console.error.apply(null, a )
+}
+
+log('hi from Hemlock');
+
+function populateList(){
+  
+  var tv = ['Game Of Thrones', 'Orange Is The New Black', 'The Big Bang Theory','Baseball','Football'];
+  var politics = ['Clinton', 'Trump', 'Obama', 'Biden', 'Democrat', 'Republican', 'Jeff Sessions', 'Paul Ryan', 'Mike Pence','right-wing','left-wing'];
+  var tech = ['Zuckerberg', 'Facebook', 'Twitter','Steve Jobs', 'Elon Musk', 'Reed Hastings', 'Reid Hoffman', 'Peter Thiel', 'Jack Dorsey',
+  'Marc Andreessen', 'Larry Ellison', 'Tim Cook', 'Sergey Brin', 'Larry Page', 'Jeff Bezos', 'TikTok','Instagram','YouTube','Reddit','NetFlix']
+  var crap = ['Kardashian', 'Selena Gomez', 'Stephen Colbert', 'Trevor Noah', 'Katy Perry', 'Seth Rogan', 'Jim Parsons',
+  'Mike Rowe', 'Neil Patrick Harris', 'Kayne', 'Simon Cowell', 'Hilton', 'Beyonce', 'Mark Cuban',
+  'Robert Downey', 'Amy Schumer', 'Drake', 'Adele', 'Beyoncé', 'Kanye', 'Nicki Minaj', 'Jennifer Lawrence',
+  'Taylor Swift', 'Jenner', 'Nicolas Cage', 'Russell Brand', 'Miley Cyrus', 'Justin Bieber', 'Tom Cruise', 'Oprah',
+  'Kushner', 'Ivanka','Karen','Jenner','Buffett'];
+  
+  // populate initial list
+  var badList = [].concat(tv, politics, crap, tech)
+  var badUrls = [];
+  
+  var badNameRegexStr = badList.join('|');
+  var badUrlsRegexStr = badUrls.join('|');
+  
+  var badNameRx = new RegExp(badNameRegexStr, "ig");
+  var badUrlRx = new RegExp(badUrlsRegexStr, 'ig');
+  
+  // TODO: Check for saved List
+  
+  // badList = _.concat(names.entertainment, names.politics, names.tech);
+  // log(badList, _.values(names))
+  badUrls = [];
+  
+  // replace spaces with - for urls
+  badList.forEach(function (t, i, a) { badUrls[i] = t.replace(new RegExp(' ', 'g'), '-'); });
+  
+  badRegexStr = badList.join('|');
+  badUrlsRegexStr = badUrls.join('|');
+  
+  badNames = new RegExp(badRegexStr, "ig");
+  badUrls = new RegExp(badUrlsRegexStr, 'ig');
+  
+  return { names: badNames, urls: badUrls }
+}
+
+
+  
