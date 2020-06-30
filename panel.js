@@ -37,6 +37,11 @@ function restore_options() {
   });
 }
 
+function clear_saved(){
+  console.log('cleared')
+  chrome.storage.sync.clear()
+}
+
 var newName = function(){
   addInput($(this).parent().parent(), '');
 }
@@ -52,3 +57,6 @@ var addInput = function(c, name){
 document.addEventListener('DOMContentLoaded', restore_options);
 document.getElementById('save').addEventListener('click',
     save_options);
+document.getElementById('clear').addEventListener('click',
+    clear_saved);
+

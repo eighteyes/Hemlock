@@ -83,7 +83,7 @@ function removeTarget(m) {
       if (typeof incCounter !== "undefined") incCounter();
     }
   } catch (e) {
-    console.error(e, m)
+    error(e, m)
   }
 }
   
@@ -174,43 +174,3 @@ function error(l){
 }
 
 log('hi from Hemlock');
-
-function populateList(){
-  
-  var tv = ['Game Of Thrones', 'Orange Is The New Black', 'The Big Bang Theory','Baseball','Football'];
-  var politics = ['Clinton', 'Trump', 'Obama', 'Biden', 'Democrat', 'Republican', 'Jeff Sessions', 'Paul Ryan', 'Mike Pence','right-wing','left-wing'];
-  var tech = ['Zuckerberg', 'Facebook', 'Twitter','Steve Jobs', 'Elon Musk', 'Reed Hastings', 'Reid Hoffman', 'Peter Thiel', 'Jack Dorsey','Bill Gates',
-  'Marc Andreessen', 'Larry Ellison', 'Tim Cook', 'Sergey Brin', 'Larry Page', 'Jeff Bezos', 'TikTok','Instagram','YouTube','Reddit','NetFlix']
-  var crap = ['Kardashian', 'Selena Gomez', 'Stephen Colbert', 'Trevor Noah', 'Katy Perry', 'Seth Rogan', 'Jim Parsons',
-  'Mike Rowe', 'Neil Patrick Harris', 'Kayne', 'Simon Cowell', 'Hilton', 'Beyonce', 'Mark Cuban',
-  'Robert Downey', 'Schumer', 'Drake', 'Adele', 'Beyoncé', 'Kanye', 'Nicki Minaj', 'Jennifer Lawrence',
-  'Taylor Swift', 'Jenner', 'Nicolas Cage', 'Russell Brand', 'Miley Cyrus', 'Justin Bieber', 'Tom Cruise', 'Oprah',
-  'Kushner', 'Ivanka','Karen','Jenner','Buffett'];
-  var xxx = ['porn','dick','pussy']
-  
-  // populate initial list
-  var badList = [].concat(tv, politics, crap, tech, xxx)
-  
-  var badUrls = [];
-  var badNames = [];
-  
-  
-  // replace spaces with - for urls
-  badList.forEach(function (t, i, a) { badUrls[i] = t.replace(new RegExp(' ', 'g'), '-'); });
-  
-  // Don't catch partials ( Trumpet )
-  badList = badList.map(function(v){
-    return v + " "
-  });
-  
-  
-  var badNameRegexStr = badList.join('|');
-  var badUrlsRegexStr = badUrls.join('|');
-  
-  badNames = new RegExp(badNameRegexStr, "ig");
-  badUrls = new RegExp(badUrlsRegexStr, 'ig');
-  
-  return { names: badNames, urls: badUrls }
-}
-
-
