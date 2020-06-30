@@ -4,11 +4,11 @@ $(function () {
   
   // names and urls of offenders
   var bads = populateList();
-
+  
   if (location.href.match(bads.urls)) {
     log('Already present in hell');
   }
-
+  
   // do we find the poop anywhere on page?
   log("Searching for", bads);
   matches = document.body.innerText.match(bads.names);
@@ -66,7 +66,7 @@ function parseAttributes(domObj, matchObj) {
   for (var i = 0, l = atts.length; i < l; i++) {
     var m = atts[i].value.match(matchObj.names) || atts[i].value.match(matchObj.urls);
     if (m) {
-      log("removing on attr:", atts[i].value, m)
+      log("removing on attr:", atts[i].value, m[0])
       return true;
     }
   }
@@ -77,15 +77,17 @@ function parseAttributes(domObj, matchObj) {
 
 function removeTarget(m) {
   try {
-    m.target.parentNode.removeChild(m.target);
-    log('removeNode',m)
-    incCounter();
+    if ( m.target.parentNode )  {
+      m.target.parentNode.removeChild(m.target);
+      log('removeNode',m)
+      if (typeof incCounter !== "undefined") incCounter();
+    }
   } catch (e) {
     console.error(e, m)
   }
 }
-
-
+  
+  
 function runBaseFilter(filters) {
   var count = 0;
   if  ( !filters.hasOwnProperty('urls') ){
@@ -112,7 +114,7 @@ function runBaseFilter(filters) {
   l = $('div').contents().filter(function () {
     // is this a textnode and does it match?
     if ( this.nodeType === 3 ){
-      var m = this.textContent.match(badNames)
+      var m = this.textContent.match(filters.names)
       if (m){
         headClean.push([ this.textContent, m[0] ])
       }
@@ -125,16 +127,16 @@ function runBaseFilter(filters) {
   
   //headlines and articles, be ruthless
   var l = $('h1,h2,h3,h4,h5,h6,p,a,span,strong').filter(function () {
-    var m = $(this).text().match(badNames);
+    var m = $(this).text().match(filters.names);
     if (m){
       headClean.push([ $(this).text(), m[0] ])
       return m
     }
     return false
   }).remove();
-
-    
-  log('Last Clean', headClean)
+  
+  
+  log('Last Clean', headClean, badLinks, badImgs)
   
   count += headClean.length;
   count += badLinks.length;
@@ -142,20 +144,20 @@ function runBaseFilter(filters) {
   
   chrome.runtime.sendMessage({ count: count });
 }
-  
-  
-  
-  function setSavedList(list){
-    chrome.storage.sync.set(list);
-  }
-  function getSavedList(cb){
-    chrome.storage.sync.get(null, function (list) {
-      log('|=|_ > Saved 🍃:', list);
-      
-      cb(list)
-      
-    });
-  }
+
+
+
+function setSavedList(list){
+  chrome.storage.sync.set(list);
+}
+function getSavedList(cb){
+  chrome.storage.sync.get(null, function (list) {
+    log('|=|_ > Saved 🍃:', list);
+    
+    cb(list)
+    
+  });
+}
 
 
 // add the icon to logs
@@ -177,41 +179,38 @@ function populateList(){
   
   var tv = ['Game Of Thrones', 'Orange Is The New Black', 'The Big Bang Theory','Baseball','Football'];
   var politics = ['Clinton', 'Trump', 'Obama', 'Biden', 'Democrat', 'Republican', 'Jeff Sessions', 'Paul Ryan', 'Mike Pence','right-wing','left-wing'];
-  var tech = ['Zuckerberg', 'Facebook', 'Twitter','Steve Jobs', 'Elon Musk', 'Reed Hastings', 'Reid Hoffman', 'Peter Thiel', 'Jack Dorsey',
+  var tech = ['Zuckerberg', 'Facebook', 'Twitter','Steve Jobs', 'Elon Musk', 'Reed Hastings', 'Reid Hoffman', 'Peter Thiel', 'Jack Dorsey','Bill Gates',
   'Marc Andreessen', 'Larry Ellison', 'Tim Cook', 'Sergey Brin', 'Larry Page', 'Jeff Bezos', 'TikTok','Instagram','YouTube','Reddit','NetFlix']
   var crap = ['Kardashian', 'Selena Gomez', 'Stephen Colbert', 'Trevor Noah', 'Katy Perry', 'Seth Rogan', 'Jim Parsons',
   'Mike Rowe', 'Neil Patrick Harris', 'Kayne', 'Simon Cowell', 'Hilton', 'Beyonce', 'Mark Cuban',
-  'Robert Downey', 'Amy Schumer', 'Drake', 'Adele', 'Beyoncé', 'Kanye', 'Nicki Minaj', 'Jennifer Lawrence',
+  'Robert Downey', 'Schumer', 'Drake', 'Adele', 'Beyoncé', 'Kanye', 'Nicki Minaj', 'Jennifer Lawrence',
   'Taylor Swift', 'Jenner', 'Nicolas Cage', 'Russell Brand', 'Miley Cyrus', 'Justin Bieber', 'Tom Cruise', 'Oprah',
   'Kushner', 'Ivanka','Karen','Jenner','Buffett'];
+  var xxx = ['porn','dick','pussy']
   
   // populate initial list
-  var badList = [].concat(tv, politics, crap, tech)
+  var badList = [].concat(tv, politics, crap, tech, xxx)
+  
   var badUrls = [];
+  var badNames = [];
   
-  var badNameRegexStr = badList.join('|');
-  var badUrlsRegexStr = badUrls.join('|');
-  
-  var badNameRx = new RegExp(badNameRegexStr, "ig");
-  var badUrlRx = new RegExp(badUrlsRegexStr, 'ig');
-  
-  // TODO: Check for saved List
-  
-  // badList = _.concat(names.entertainment, names.politics, names.tech);
-  // log(badList, _.values(names))
-  badUrls = [];
   
   // replace spaces with - for urls
   badList.forEach(function (t, i, a) { badUrls[i] = t.replace(new RegExp(' ', 'g'), '-'); });
   
-  badRegexStr = badList.join('|');
-  badUrlsRegexStr = badUrls.join('|');
+  // Don't catch partials ( Trumpet )
+  badList = badList.map(function(v){
+    return v + " "
+  });
   
-  badNames = new RegExp(badRegexStr, "ig");
+  
+  var badNameRegexStr = badList.join('|');
+  var badUrlsRegexStr = badUrls.join('|');
+  
+  badNames = new RegExp(badNameRegexStr, "ig");
   badUrls = new RegExp(badUrlsRegexStr, 'ig');
   
   return { names: badNames, urls: badUrls }
 }
 
 
-  

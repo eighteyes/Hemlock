@@ -4,7 +4,8 @@
   "manifest_version": 2,
   "description": "Simplify by removing the unecessary influences on your life.",
   "browser_action": {
-    "default_icon": "icon.png"
+    "default_icon": "icon.png",
+    "default_popup": "panel.html"
   },
   "background": {
     "scripts": [
@@ -13,7 +14,7 @@
     "persistent": false
   },
   "permissions": [
-    "storage"
+    "storage", "activeTab"
   ],
   "content_scripts": [{
     "matches": ["http://*/*", "https://*/*"],

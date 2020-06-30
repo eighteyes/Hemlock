@@ -15,7 +15,8 @@ chrome.runtime.onMessage.addListener(
     sendResponse({farewell: "goodbye"});
   });
 
-  chrome.browserAction.onClicked.addListener(function callback(tab){
-  console.log('clicked ext button')
+chrome.browserAction.onClicked.addListener(function callback(tab){
+  log('clicked ext button')
      runBaseFilter(populateList())
+     chrome.browserAction.setPopup({popup:'panel.html'})
   })
