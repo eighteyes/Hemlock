@@ -1,26 +1,55 @@
+var counter = 0;
+
+var blacked = {};
+
+function updateCounter(count){
+  chrome.runtime.sendMessage({ count: count.toString() })
+}
 
 // onready
 $(function () {
-  
+
+  updateCounter(counter);
+
+  log('hi from Hemlock');
   // names and urls of offenders
-  var bads = populateList();
+  get_saved(function(list){
+    var bads;
+    if ( !list && list.length == 0 ){
+      log('Make Starting List')
+      bads = makeListObj(makeList());
+    } else {
+
+      log('Use Saved List')
+      bads = makeListObj(list);
+    }
+    
+    if (location.href.match(bads.urls)) {
+      log('Already present in hell');
+    }
+    
+    // do we find the poop anywhere on page?
+    log("Searching for", bads);
+    matches = document.body.innerText.match(bads.names);
+    if (matches) {
+      log('Text MATCH', matches);
+      runBaseFilter(bads);
+    }
+    
+    // stop poop from landing on the page
+    runMutateFilter(bads);
+
+    chrome.storage.sync.set({found:blacked});
+  })
   
-  if (location.href.match(bads.urls)) {
-    log('Already present in hell');
-  }
-  
-  // do we find the poop anywhere on page?
-  log("Searching for", bads);
-  matches = document.body.innerText.match(bads.names);
-  if (matches) {
-    log('Text MATCH', matches);
-    runBaseFilter(bads);
-  }
-  
-  // stop poop from landing on the page
-  runMutateFilter(bads);
 })
 // #end main
+
+ function get_saved(cb){
+  chrome.storage.sync.get(null, function(o) {
+    cb(o.list)
+  })
+}
 
 function runMutateFilter(bads){
   
@@ -67,6 +96,13 @@ function parseAttributes(domObj, matchObj) {
     var m = atts[i].value.match(matchObj.names) || atts[i].value.match(matchObj.urls);
     if (m) {
       log("removing on attr:", atts[i].value, m[0])
+
+      if (typeof blacked[m[0]] === 'undefined'){
+        blacked[m[0]] = [atts[i].value]
+      } else{
+        blacked[m[0]].push(atts[i].value)
+      }
+  
       return true;
     }
   }
@@ -79,15 +115,23 @@ function removeTarget(m) {
   try {
     if ( m.target.parentNode )  {
       m.target.parentNode.removeChild(m.target);
-      log('removeNode',m)
-      if (typeof incCounter !== "undefined") incCounter();
+      log('removeNode',m);
+      updateCounter(counter++)
     }
   } catch (e) {
     error(e, m)
   }
 }
-  
-  
+
+function addToBlack(name, url){
+  if ( !blacked.hasOwnProperty(name)){
+    blacked[name]=[url]
+  } else {
+    blacked[name].push(url);
+  }
+}
+// Black { name: [ url, ... ]}
+
 function runBaseFilter(filters) {
   var count = 0;
   if  ( !filters.hasOwnProperty('urls') ){
@@ -137,12 +181,19 @@ function runBaseFilter(filters) {
   
   
   log('Last Clean', headClean, badLinks, badImgs)
+
+  headClean.forEach(function(v){
+    if (typeof blacked[v[1]] === 'undefined'){
+      blacked[v[1]] = [v[0]]
+    } else
+      blacked[v[1]].push(v[0])
+    })
   
-  count += headClean.length;
-  count += badLinks.length;
-  count += badImgs.length;
+  counter += headClean.length;
+  counter += badLinks.length;
+  counter += badImgs.length;
   
-  chrome.runtime.sendMessage({ count: count });
+  updateCounter(counter);
 }
 
 
@@ -173,4 +224,4 @@ function error(l){
   console.error.apply(null, a )
 }
 
-log('hi from Hemlock');
+

@@ -1,45 +1,39 @@
 console.log('hi from panel')
 var xhr = new XMLHttpRequest();
 xhr.onreadystatechange = handleStateChange; // Implemented elsewhere.
-xhr.open("GET", chrome.extension.getURL('/config.yaml'), true);
-xhr.send();
 
 function handleStateChange(data){
   console.log('Change', data);
 }
 function save_options() {
-  var o = {
-    entertainment: [],
-    tech: [],
-    politics: []
-  };
-  $('#tech input').each(function(i){ o.tech.push($(this).val()) });
-  $('#entertainment input').each(function(i){ o.entertainment.push($(this).val()) });
-  $('#politics input').each(function(i){ o.politics.push($(this).val()) });
+  var o = $('#blocklist').val().split('\n')
   console.log('update save', o);
-  chrome.storage.sync.set(o);
+  chrome.storage.sync.set({list:o});
 }
 
-// Restores select box and checkbox state using the preferences
-// stored in chrome.storage.
 function restore_options() {
-  // Use default value color = 'red' and likesColor = true.
-  chrome.storage.sync.get(null, function(items) {
-    console.log('saved', items);
-    for ( var k in items){
-      var v = items[k];
-      var c = $('#'+k);
-      c.children('h1').prepend($('<button>+</button>&nbsp;').on('click', newName));    
-      v.forEach(function(name){
-        addInput(c, name);
-      })
+  chrome.storage.sync.get(null, function(o) {
+    console.log('saved', o);
+    if ( o.hasOwnProperty('list') && o.list.length > 0 ){
+      o = o.list.join('\n')
+      $('#blocklist').val(o)
     }
   });
 }
 
+
+
 function clear_saved(){
   console.log('cleared')
+  $('#blocklist').val('')
+
   chrome.storage.sync.clear()
+}
+
+function add_defaults(){
+  console.log('Setting defaults')
+var content  = makeList().join('\n')
+  $('#blocklist').val(content)
 }
 
 var newName = function(){
@@ -54,9 +48,15 @@ var addInput = function(c, name){
   });
   c.append(input, btn);
 }
-document.addEventListener('DOMContentLoaded', restore_options);
-document.getElementById('save').addEventListener('click',
+function setup(){
+  restore_options()
+  document.getElementById('save').addEventListener('click',
     save_options);
 document.getElementById('clear').addEventListener('click',
     clear_saved);
+document.getElementById('defaults').addEventListener('click',
+    add_defaults);
+
+}
+document.addEventListener('DOMContentLoaded', setup);
 
