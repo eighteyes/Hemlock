@@ -9,6 +9,7 @@ function updateCounter(count){
 // onready
 $(function () {
 
+  // reset counter on load
   updateCounter(counter);
 
   log('hi from Hemlock');
@@ -72,12 +73,13 @@ function runMutateFilter(bads){
           log('mutation class ->>>', m.target.text.match(bads.names));
           removeTarget(m);
         }
-      } else if (!_.isNull(m.target.innerHTML.match(bads.urls)) && !_.isNull(m.target.innerText.match(bads.names)) && (m.target.innerHTML.match(bads.urls).length > 0 || m.target.innerText.match(bads.names).length > 0)) {
-        if (_.isNull(m.target.tagName.match(/BODY|SCRIPT/))) {
-          log('mutation inner =>>>', m.target, m.target.innerHTML.match(bads.urls), m.target.innerText.match(bads.names));
-          removeTarget(m);
-        }
       }
+      //  else if (!_.isNull(m.target.innerHTML.match(bads.urls)) && !_.isNull(m.target.innerText.match(bads.names)) && (m.target.innerHTML.match(bads.urls).length > 0 || m.target.innerText.match(bads.names).length > 0)) {
+      //   if (_.isNull(m.target.tagName.match(/BODY|SCRIPT/))) {
+      //     log('mutation inner =>>>', m.target, m.target.innerHTML.match(bads.urls), m.target.innerText.match(bads.names));
+      //     removeTarget(m);
+      //   }
+      // }
     })
   });
   
