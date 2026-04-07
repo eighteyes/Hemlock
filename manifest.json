@@ -1,25 +1,36 @@
 {
+  "manifest_version": 3,
   "name": "Hemlock",
-  "version": "0",
-  "manifest_version": 2,
-  "description": "Simplify by removing the unecessary influences on your life.",
-  "browser_action": {
-    "default_icon": "icon.png",
-    "default_popup": "popup.html"
+  "version": "3.0.0",
+  "description": "A measured dose of silence — remove references to specified people from web pages.",
+  "permissions": ["storage", "activeTab", "contextMenus"],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
   },
   "background": {
-    "scripts": [
-      "background.js"
-    ],
-    "persistent": false
+    "service_worker": "service-worker.js"
   },
-  "permissions": [
-    "storage", "activeTab"
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": [
+        "lib/sanitize.js",
+        "lib/filter-engine.js",
+        "lib/defaults.js",
+        "lib/storage.js",
+        "content-script.js"
+      ],
+      "run_at": "document_idle"
+    }
   ],
-  "content_scripts": [{
-    "matches": ["http://*/*", "https://*/*"],
-    "css": ["style.css"],
-    "js": ["jquery.js", "background.js", "lodash.js", "contentScript.js", "defaults.js"]
-  }],
-  "options_page": "panel.html"
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
 }

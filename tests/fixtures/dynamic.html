@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <div id="feed"></div>
+  <script>
+    setTimeout(() => {
+      const feed = document.getElementById('feed');
+      const items = [
+        'Jeff Bezos spotted shopping',
+        'New park opens downtown',
+        'Zuckerberg testifies'
+      ];
+      items.forEach(text => {
+        const p = document.createElement('p');
+        p.textContent = text;
+        feed.appendChild(p);
+      });
+    }, 200);
+  </script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Hemlock</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <h1>&#x1F343; Hemlock</h1>
+      <span class="tagline">a measured dose of silence</span>
+    </div>
+    <nav>
+      <button id="tab-stats" class="tab active">Stats</button>
+      <button id="tab-blocklist" class="tab">Blocklist</button>
+      <button id="tab-add" class="tab">Add</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="view-stats">
+      <div id="stats-summary"></div>
+      <ul id="stats-entries"></ul>
+    </section>
+
+    <section id="view-blocklist" hidden>
+      <div class="toolbar">
+        <button id="btn-import" title="Import JSON">Import</button>
+        <button id="btn-export" title="Export JSON">Export</button>
+        <button id="btn-reset" class="danger" title="Reset to defaults">Reset</button>
+      </div>
+      <div id="bucket-list"></div>
+      <input type="file" id="file-import" accept=".json" hidden>
+    </section>
+    <section id="view-add" hidden>
+      <div class="add-panel">
+        <label class="add-label" for="add-bucket-select">Bucket</label>
+        <div class="add-input-row">
+          <select id="add-bucket-select"></select>
+          <button id="btn-add-bucket" title="New bucket">New</button>
+        </div>
+        <label class="add-label" for="add-name-input">Name</label>
+        <div class="add-input-row">
+          <input type="text" id="add-name-input" placeholder="Who needs silencing?">
+          <button id="btn-add-entry">Add</button>
+        </div>
+        <div id="add-feedback"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <a href="https://github.com/eighteyes/Hemlock/issues/new" target="_blank" id="report-link">Site not working? Report it</a>
+  </footer>
+
+  <script src="../lib/sanitize.js"></script>
+  <script src="../lib/filter-engine.js"></script>
+  <script src="../lib/defaults.js"></script>
+  <script src="../lib/storage.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
