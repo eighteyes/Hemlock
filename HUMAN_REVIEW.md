@@ -84,7 +84,7 @@ npx playwright test
 
 ## Bug Fix Batch — 2026-07-04
 Session: subagent-bug-fix-12
-Commit: pending
+Commit: `814b127`
 
 ### Fixes Applied
 12 bugs fixed. Test count: 8 passing.
