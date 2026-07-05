@@ -56,6 +56,7 @@
 
   function findRemovableParent(node) {
     let el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+    if (!el) return null;
     let candidate = el;
 
     // Site-specific override: walk up to matching selector
@@ -78,7 +79,7 @@
       }
       if (el.parentElement && el.parentElement.children.length > 1) {
         candidate = el;
-        break;
+        // Don't break: keep climbing to find a semantic CONTAINER_TAG parent
       }
       el = el.parentElement;
     }
@@ -112,7 +113,8 @@
   }
 
   function recordHit(matchText) {
-    hitMap[matchText] = (hitMap[matchText] || 0) + 1;
+    const key = Sanitize.normalizeStatKey(matchText);
+    hitMap[key] = (hitMap[key] || 0) + 1;
     totalRemoved++;
   }
 
@@ -207,34 +209,80 @@
   }
 
   function mutationFilter(mutations) {
+    if (!chrome.runtime?.id) {
+      if (observer) observer.disconnect();
+      return;
+    }
     if (!regex) return;
+    const toProcess = [];
     for (const mutation of mutations) {
       for (const added of mutation.addedNodes) {
-        if (added.nodeType === Node.TEXT_NODE) {
-          checkAndRemove(added);
-        } else if (added.nodeType === Node.ELEMENT_NODE) {
-          const matchName = checkAttributes(added);
-          if (matchName) {
-            recordHit(matchName);
-            removeNode(added);
-            continue;
-          }
-          const walker = document.createTreeWalker(
-            added,
-            NodeFilter.SHOW_TEXT,
-            null
-          );
-          let textNode;
-          while ((textNode = walker.nextNode())) {
-            checkAndRemove(textNode);
+        if (added.nodeType === Node.TEXT_NODE || added.nodeType === Node.ELEMENT_NODE) {
+          toProcess.push(added);
+        }
+      }
+    }
+    if (toProcess.length === 0) return;
+
+    const targets = new Set();
+    for (const added of toProcess) {
+      if (!document.body.contains(added)) continue;
+      if (added.nodeType === Node.TEXT_NODE) {
+        regex.lastIndex = 0;
+        const match = regex.exec(added.textContent);
+        if (match) {
+          const target = findRemovableParent(added);
+          if (target && !targets.has(target)) {
+            targets.add(target);
+            recordHit(match[1]);
           }
         }
+        continue;
+      }
+      const matchName = checkAttributes(added);
+      if (matchName) {
+        const target = findRemovableParent(added);
+        if (target && !targets.has(target)) {
+          targets.add(target);
+          recordHit(matchName);
+        }
+        continue;
+      }
+      const walker = document.createTreeWalker(added, NodeFilter.SHOW_TEXT, null);
+      let textNode;
+      while ((textNode = walker.nextNode())) {
+        regex.lastIndex = 0;
+        const match = regex.exec(textNode.textContent);
+        if (match) {
+          const target = findRemovableParent(textNode);
+          if (target && !targets.has(target)) {
+            targets.add(target);
+            recordHit(match[1]);
+          }
+        }
+      }
+    }
+
+    for (const el of targets) {
+      if (el.parentNode) {
+        const parent = el.parentNode;
+        parent.removeChild(el);
+        cleanEmptyAncestors(parent);
       }
     }
     flushStats();
   }
 
   let flushedTotal = 0;
+
+  function safeSendMessage(msg) {
+    try {
+      if (!chrome.runtime?.id) return;
+      chrome.runtime.sendMessage(msg, () => {
+        if (chrome.runtime.lastError) { /* port closed, ignore */ }
+      });
+    } catch (e) { /* context invalidated */ }
+  }
 
   function flushStats() {
     if (totalRemoved === flushedTotal) return;
@@ -246,7 +294,7 @@
     const flushedCopy = { ...hitMap };
     flushedHits = flushedCopy;
     flushedTotal = totalRemoved;
-    chrome.runtime.sendMessage({
+    safeSendMessage({
       type: 'hits',
       hitMap: delta,
       total: totalRemoved
@@ -254,6 +302,7 @@
   }
 
   let observer = null;
+  let initPromise = null;
 
   function startObserver() {
     observer = new MutationObserver(mutationFilter);
@@ -263,29 +312,37 @@
     });
   }
 
-  async function init() {
-    const buckets = await Storage.load();
-    regex = FilterEngine.compile(buckets);
-    if (!regex) return;
+  async function runFilter() {
+    try {
+      const paused = await Storage.getPaused();
+      if (paused) return;
+      const buckets = await Storage.load();
+      regex = FilterEngine.compile(buckets);
+      if (!regex) return;
+      baseFilter();
+      flushStats();
+      startObserver();
+    } catch (e) {
+      // Fail open: if storage is unavailable, skip filtering rather than crash
+      console.debug('[Hemlock] init error, skipping filter:', e);
+    }
+  }
 
-    baseFilter();
-    flushStats();
-    startObserver();
+  async function init() {
+    initPromise = runFilter();
+    await initPromise;
   }
 
   chrome.runtime.onMessage.addListener((msg) => {
     if (msg.type === 'refilter') {
-      if (observer) observer.disconnect();
-      hitMap = {};
-      totalRemoved = 0;
-      flushedHits = {};
-      flushedTotal = 0;
-      Storage.load().then(buckets => {
-        regex = FilterEngine.compile(buckets);
-        if (!regex) return;
-        baseFilter();
-        flushStats();
-        startObserver();
+      // Wait for any in-progress init before re-running
+      Promise.resolve(initPromise).then(() => {
+        if (observer) observer.disconnect();
+        hitMap = {};
+        totalRemoved = 0;
+        flushedHits = {};
+        flushedTotal = 0;
+        initPromise = runFilter();
       });
     }
   });

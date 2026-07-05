@@ -1,0 +1,9 @@
+node_modules/
+test-results/
+playwright-report/
+*.zip
+*.log
+.ai/
+.DS_Store
+icon-rough.png
+screenshot.png

@@ -9,7 +9,7 @@
   <header>
     <div class="brand">
       <h1>&#x1F343; Hemlock</h1>
-      <span class="tagline">a measured dose of silence</span>
+      <span class="tagline">a precise dose of silence</span>
     </div>
     <nav>
       <button id="tab-stats" class="tab active">Stats</button>
@@ -20,6 +20,10 @@
 
   <main>
     <section id="view-stats">
+      <div class="stats-scope">
+        <button class="scope-btn active" data-scope="page">This page</button>
+        <button class="scope-btn" data-scope="all">All pages</button>
+      </div>
       <div id="stats-summary"></div>
       <ul id="stats-entries"></ul>
     </section>
@@ -51,7 +55,11 @@
   </main>
 
   <footer>
-    <a href="https://github.com/eighteyes/Hemlock/issues/new" target="_blank" id="report-link">Site not working? Report it</a>
+    <div id="paused-banner" hidden>Filtering disabled</div>
+    <div class="footer-row">
+      <a href="https://github.com/eighteyes/Hemlock/issues/new" target="_blank" id="report-link">Site not working? Report it</a>
+      <button id="btn-disable-reload">Disable &amp; Reload</button>
+    </div>
   </footer>
 
   <script src="../lib/sanitize.js"></script>

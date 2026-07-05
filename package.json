@@ -2,7 +2,10 @@
   "name": "hemlock",
   "version": "3.0.0",
   "private": true,
-  "description": "A measured dose of silence",
+  "description": "A precise dose of silence",
+  "scripts": {
+    "test": "playwright test"
+  },
   "devDependencies": {
     "@playwright/test": "^1.49.0"
   }

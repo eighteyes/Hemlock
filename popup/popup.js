@@ -34,16 +34,79 @@
     else if (name === 'add') renderAddPanel();
   }
 
+  let statsScope = 'page';
+
+  for (const btn of $$('.scope-btn')) {
+    btn.addEventListener('click', () => {
+      for (const b of $$('.scope-btn')) b.classList.remove('active');
+      btn.classList.add('active');
+      statsScope = btn.dataset.scope;
+      renderStats();
+    });
+  }
+
+  async function getPageHitMap() {
+    const timeout = new Promise((resolve) =>
+      setTimeout(() => resolve({ hitMap: {}, total: 0 }), 2000)
+    );
+    const request = new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: 'getPageStats' }, (resp) => {
+        if (chrome.runtime.lastError) {
+          console.debug('[Hemlock] getPageStats:', chrome.runtime.lastError.message);
+          resolve({ hitMap: {}, total: 0 });
+          return;
+        }
+        resolve(resp || { hitMap: {}, total: 0 });
+      });
+    });
+    return Promise.race([request, timeout]);
+  }
+
   async function renderStats() {
-    const { byBucket, pageTotal, days } = await Storage.getAggregatedStats();
     const summary = $('#stats-summary');
     const list = $('#stats-entries');
-    summary.textContent = `${pageTotal} items filtered (${days} day${days !== 1 ? 's' : ''})`;
     list.textContent = '';
 
-    if (byBucket.length === 0) {
-      summary.textContent = 'No filtering activity yet.';
+    let totals, pageTotal, subtitle;
+
+    if (statsScope === 'page') {
+      const pageData = await getPageHitMap();
+      totals = pageData.hitMap;
+      pageTotal = pageData.total;
+      subtitle = `${pageTotal} filtered on this page`;
+    } else {
+      const agg = await Storage.getAggregatedStats();
+      totals = agg.totals;
+      pageTotal = agg.pageTotal;
+      subtitle = `${pageTotal} filtered (${agg.days} day${agg.days !== 1 ? 's' : ''})`;
+    }
+
+    summary.textContent = subtitle;
+
+    if (pageTotal === 0) {
+      summary.textContent = statsScope === 'page' ? 'Nothing filtered on this page.' : 'No filtering activity yet.';
       return;
+    }
+
+    const buckets = await Storage.load();
+    const byBucket = [];
+    const claimed = new Set();
+
+    for (const bucket of buckets) {
+      const entries = {};
+      let bucketTotal = 0;
+      for (const entry of bucket.entries) {
+        for (const [name, count] of Object.entries(totals)) {
+          if (name.toLowerCase() === entry.name.toLowerCase() && !claimed.has(name.toLowerCase())) {
+            entries[entry.name] = (entries[entry.name] || 0) + count;
+            bucketTotal += count;
+            claimed.add(name.toLowerCase());
+          }
+        }
+      }
+      if (bucketTotal > 0) {
+        byBucket.push({ name: bucket.name, total: bucketTotal, entries });
+      }
     }
 
     const sorted = byBucket.sort((a, b) => b.total - a.total);
@@ -160,9 +223,13 @@
         del.className = 'entry-delete';
         del.textContent = '\u00D7';
         del.addEventListener('click', () => {
-          bucket.entries.splice(ei, 1);
-          saveBuckets(buckets);
-          renderBlocklist();
+          // Find current index at click time to avoid stale-closure bugs on rapid deletes
+          const currentIdx = bucket.entries.indexOf(entry);
+          if (currentIdx !== -1) {
+            bucket.entries.splice(currentIdx, 1);
+            saveBuckets(buckets);
+            renderBlocklist();
+          }
         });
 
         li.append(cb, label, del);
@@ -238,7 +305,11 @@
   function notifyRefilter() {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]) {
-        chrome.tabs.sendMessage(tabs[0].id, { type: 'refilter' });
+        chrome.tabs.sendMessage(tabs[0].id, { type: 'refilter' }, () => {
+          if (chrome.runtime.lastError) {
+            console.debug('[Hemlock] notifyRefilter:', chrome.runtime.lastError.message);
+          }
+        });
       }
     });
   }
@@ -263,19 +334,29 @@
     const file = e.target.files[0];
     if (!file) return;
     const text = await file.text();
+    const feedback = $('#add-feedback');
+    function importError(msg) {
+      feedback.textContent = msg;
+      feedback.className = 'add-feedback error';
+      console.error('Import failed:', msg);
+    }
     try {
       const data = JSON.parse(text);
-      if (!Array.isArray(data)) throw new Error('Expected array');
+      if (!Array.isArray(data)) throw new Error('Expected array at top level');
+      if (data.length > 100) throw new Error('Too many buckets (max 100)');
       for (const b of data) {
-        if (!b.id || !b.name || !Array.isArray(b.entries)) throw new Error('Invalid bucket');
+        if (!b.id || !b.name || !Array.isArray(b.entries)) throw new Error('Invalid bucket structure');
+        if (b.entries.length > 1000) throw new Error(`Bucket "${b.name}" exceeds 1000 entries`);
+        b.enabled = Boolean(b.enabled);
         for (const entry of b.entries) {
           if (!Sanitize.isValidName(entry.name)) throw new Error(`Invalid name: ${entry.name}`);
+          if (typeof entry.enabled !== 'boolean') entry.enabled = Boolean(entry.enabled);
         }
       }
       await saveBuckets(data);
       renderBlocklist();
     } catch (err) {
-      console.error('Import failed:', err);
+      importError(err.message);
     }
   });
 
@@ -295,19 +376,36 @@
   $('#btn-reset').addEventListener('click', () => {
     const overlay = document.createElement('div');
     overlay.className = 'confirm-overlay';
-    overlay.innerHTML = `
-      <div class="confirm-dialog">
-        <p>Reset all buckets to defaults?<br>Custom entries will be lost.</p>
-        <div class="confirm-actions">
-          <button class="btn-cancel">Cancel</button>
-          <button class="btn-confirm">Reset</button>
-        </div>
-      </div>`;
+
+    const dialog = document.createElement('div');
+    dialog.className = 'confirm-dialog';
+
+    const p = document.createElement('p');
+    p.textContent = 'Reset all buckets to defaults?';
+    const br = document.createElement('br');
+    const note = document.createTextNode('Custom entries will be lost.');
+    p.appendChild(br);
+    p.appendChild(note);
+
+    const actions = document.createElement('div');
+    actions.className = 'confirm-actions';
+
+    const btnCancel = document.createElement('button');
+    btnCancel.className = 'btn-cancel';
+    btnCancel.textContent = 'Cancel';
+
+    const btnConfirm = document.createElement('button');
+    btnConfirm.className = 'btn-confirm';
+    btnConfirm.textContent = 'Reset';
+
+    actions.append(btnCancel, btnConfirm);
+    dialog.append(p, actions);
+    overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
-    overlay.querySelector('.btn-cancel').addEventListener('click', () => overlay.remove());
+    btnCancel.addEventListener('click', () => overlay.remove());
     overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
-    overlay.querySelector('.btn-confirm').addEventListener('click', async () => {
+    btnConfirm.addEventListener('click', async () => {
       overlay.remove();
       const defaults = Defaults.getDefaults();
       await saveBuckets(defaults);
@@ -315,6 +413,25 @@
     });
   });
 
+  // Disable & Reload
+  function updatePausedUI(paused) {
+    const btn = $('#btn-disable-reload');
+    const banner = $('#paused-banner');
+    btn.textContent = paused ? 'Resume & Reload' : 'Disable & Reload';
+    btn.classList.toggle('paused', paused);
+    banner.hidden = !paused;
+  }
+
+  $('#btn-disable-reload').addEventListener('click', async () => {
+    const paused = await Storage.getPaused();
+    await Storage.setPaused(!paused);
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]) chrome.tabs.reload(tabs[0].id);
+    });
+    window.close();
+  });
+
   // Init
+  Storage.getPaused().then(updatePausedUI);
   renderStats();
 })();

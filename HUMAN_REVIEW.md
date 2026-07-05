@@ -1,71 +1,151 @@
 # Human Review
 
-## Hemlock V3 Rewrite — 2026-02-21
-Session: `1afc57d2-9b90-48e1-97c4-5170501ed93f` (plan), current session (implementation)
+## Hemlock v1.0.0 Ship Checklist — 2026-04-07
+Session: current
+Commit: `2344216`
 
-### Load Extension
+### 1. Load Extension
 - [ ] Open `chrome://extensions`, enable Developer mode
 - [ ] Click "Load unpacked", select `Hemlock/` directory
-
-```bash
-# Verify no manifest errors in the extensions page
-```
-
+- [ ] Confirm no manifest errors
 - [ ] Confirm extension icon appears in toolbar
 
-### Content Filtering
-- [ ] Visit a news site (e.g., cnn.com, reddit.com)
-- [ ] Confirm articles mentioning default blocklist names (Trump, Musk, etc.) are removed
-- [ ] Confirm badge shows a count > 0
-- [ ] Scroll / load more content, confirm MutationObserver catches dynamic additions
-- [ ] Verify div-soup cleanup: on CNN, entire card wrappers should be removed (no empty ghost divs left behind)
-- [ ] Verify company name filtering: search for "OpenAI" or "Tesla" content and confirm removal
+### 2. Content Filtering — Static Pages
+- [ ] Visit CNN — confirm card-level removal (`.card.container__item` override)
+- [ ] Visit BBC — confirm `data-testid` R-rule catches story cards
+- [ ] Visit NPR or Fox News — confirm `<article>` tag removal
+- [ ] Visit The Verge — confirm `role="article"` R-rule fires
+- [ ] Inspect DOM after removal: no empty ghost divs remaining (E-rule)
 
-### Popup UI
-- [ ] Click extension icon to open popup
-- [ ] Stats tab: confirm filter counts display
-- [ ] Switch to Blocklist tab: confirm 5 buckets render (Politicians, Tech Bros, Billionaires, Companies, Celebrities)
-- [ ] Toggle a bucket off, confirm content reappears on page refresh
-- [ ] Add a custom name, confirm it appears and filters on next page load
-- [ ] Delete an entry, confirm removal
-- [ ] Export JSON, verify file downloads
-- [ ] Import the exported JSON, confirm round-trip
+### 3. Content Filtering — Dynamic / SPA
+- [ ] Visit Reddit home — confirm posts with blocked names are removed
+- [ ] Scroll down to trigger infinite scroll, confirm new posts get filtered
+- [ ] Visit a news site with lazy-loading, confirm MutationObserver catches late content
+- [ ] Reddit override: verify `faceplate-tracker[source="post"]` catches new Reddit cards
 
-### Context Menu
-- [ ] Highlight text on any page
-- [ ] Right-click, select "Block [name] with Hemlock"
-- [ ] Confirm name appears in Custom bucket in popup
-- [ ] Confirm page re-filters without reload
+### 4. False Positive Check
+- [ ] Search for a coffee shop or fragrance — "musk" should NOT trigger (word boundary)
+- [ ] Visit a page about fruit/recipes — "Apple" should NOT trigger (disabled by default)
+- [ ] Visit a page about Santa Cruz — "Ted Cruz" requires full match, "Cruz" alone should not fire
+- [ ] Open Google and search for something — page should not break
 
-### Dark Mode
-- [ ] Toggle system to dark mode
-- [ ] Open popup, confirm dark theme applies
+### 5. Badge & Hit Counts
+- [ ] Badge shows count > 0 on a filtered page
+- [ ] Navigate to a clean page — badge should show 0 or disappear
+- [ ] Reload a filtered page, confirm counts are reasonable (not inflated)
 
-### Playwright Tests
+### 6. Popup — Stats Tab
+- [ ] "This page" toggle: shows only current tab's hits grouped by bucket
+- [ ] "All pages" toggle: shows 7-day aggregate grouped by bucket
+- [ ] Click a bucket header to expand — individual names and counts visible
+- [ ] Buckets start collapsed (no names visible by default)
+- [ ] Case variants collapsed (e.g., "TRUMP" and "Trump" counted together)
+
+### 7. Popup — Blocklist Tab
+- [ ] 5 buckets visible: Politicians, Tech Bros, Billionaires, Companies, Celebrities
+- [ ] All buckets start collapsed
+- [ ] Master checkbox toggles all entries in bucket on/off
+- [ ] Toggling a bucket off → refresh page → blocked content reappears
+- [ ] Delete button appears on hover, removes entry
+- [ ] Import JSON — verify round-trip with exported file
+- [ ] Export JSON — verify file downloads
+- [ ] Reset button shows confirmation dialog
+- [ ] Cancel dismisses dialog, Reset wipes to defaults
+
+### 8. Popup — Add Tab
+- [ ] Bucket dropdown populated with all buckets
+- [ ] "New" button creates a custom bucket, selects it in dropdown
+- [ ] Add a name — feedback shows "added to [bucket]"
+- [ ] Duplicate name — feedback shows "Already blocked"
+- [ ] Invalid name (special chars) — feedback shows "Invalid name"
+- [ ] Added name appears in Blocklist tab and filters on next page load
+- [ ] "Robert F. Kennedy" accepted (period in name allowed)
+
+### 9. Context Menu
+- [ ] Select text on any page → right-click → "Block [name] with Hemlock"
+- [ ] Name added to Custom bucket
+- [ ] Page re-filters immediately without reload
+
+### 10. Theme
+- [ ] Dark mode (default): dark apothecary palette, Cormorant Garamond header
+- [ ] Light mode: switch system theme, confirm light palette applies
+- [ ] Footer link "Site not working? Report it" → opens GitHub issue on eighteyes/Hemlock
+
+### 11. Playwright Tests
 ```bash
-cd /Users/god/projects/Hemlock && npm install && npx playwright install chromium && npx playwright test
+cd /Users/god/projects/Hemlock
+npm install
+npx playwright install chromium
+npx playwright test
+```
+- [ ] All 8 tests pass (basic, nested, dynamic, images, links, div-soup, unicode, sanitization)
+
+---
+
+## Bug Fix Batch — 2026-07-04
+Session: subagent-bug-fix-12
+Commit: pending
+
+### Fixes Applied
+12 bugs fixed. Test count: 8 passing.
+
+**Quick smoke checks:**
+
+#### Unicode filtering
+- [ ] Visit a page mentioning "Orbán" — article should be removed
+- [ ] Check badge count increments
+
+#### Stats key normalization
+- [ ] Open popup → Stats tab → "All pages"
+- [ ] Confirm "Jim Jordan" appears as "Jim Jordan" not "Jim jordan"
+- [ ] Confirm "TRUMP" hits normalize to "Trump"
+
+#### Popup import hardening
+- [ ] Import a JSON with >100 buckets — should show error feedback
+- [ ] Import a JSON with a bucket containing >1000 entries — error feedback
+- [ ] Import a malformed JSON string — error feedback
+
+#### Delete entry stability
+- [ ] In Blocklist tab, rapidly click delete on multiple entries in one bucket
+- [ ] Verify correct entries are removed (none skipped, none doubled)
+
+#### Popup hang guard
+- [ ] Disable extension, open popup → Stats tab should load within 2 seconds (not hang)
+
+#### Reset dialog (no innerHTML)
+- [ ] Click Reset → confirm dialog appears with Cancel and Reset buttons
+- [ ] Cancel dismisses; Reset wipes to defaults; no XSS vector in dialog
+
+#### Init hardening
+- [ ] With storage cleared, reload a filtered page — filtering runs cleanly
+- [ ] Send a refilter message during page load — no race crash, filtering completes
+
+#### Container climbing (findRemovableParent fix)
+- [ ] Visit a busy news site — whole articles/cards are removed, not just headlines
+- [ ] Confirm no over-removal: unrelated sibling articles survive
+
+#### Manifest scope
+- [ ] Open `chrome://extensions` → Hemlock details — no "read files on your computer" access requested
+- [ ] `manifest.json` content_scripts matches contain only `http://*/*` and `https://*/*`
+
+#### Test infrastructure
+- [ ] `npx playwright test` — fixtures served over `http://127.0.0.1` (ephemeral port), no file:// URLs
+
+### 12. Pre-Publish
+- [ ] Update README.md with v3 feature list
+- [ ] Verify `manifest.json` and `package.json` versions are `3.0.0`
+- [ ] Screenshot popup for Chrome Web Store listing
+- [ ] Write store description emphasizing user-configurable filtering (not the preset names)
+- [ ] Zip extension directory (exclude: node_modules, tests, .ai, .claude, test-results)
+
+```bash
+cd /Users/god/projects/Hemlock
+zip -r hemlock-v3.zip manifest.json content-script.js service-worker.js lib/ popup/ icons/ -x "*.DS_Store"
 ```
 
-- [ ] All tests pass (including new `div-soup` test)
+- [ ] Upload to Chrome Web Store developer dashboard
+- [ ] Push to GitHub
 
-## S+E+R Div Removal & Updated Defaults — 2026-04-07
-
-### Div Removal Strategy (S+E+R)
-- [ ] CNN: verify `.card.container__item` override removes entire card, no empty wrappers remain
-- [ ] Reddit: verify `.thing` / `shreddit-post` override catches post containers
-- [ ] BBC: verify `data-testid` R-rule catches story cards via data attributes
-- [ ] The Verge: verify `role="article"` R-rule catches article containers
-- [ ] NPR/Fox News: verify `<article>` CONTAINER_TAG catches stories (existing behavior)
-- [ ] Any div-heavy site: verify single-child div chains collapse upward (S-rule)
-- [ ] After removal: inspect DOM for orphaned empty divs — E-rule should prune them
-
-### Companies Bucket
-- [ ] Open popup, confirm "Companies" bucket appears between Billionaires and Celebrities
-- [ ] Toggle Companies bucket off, refresh a tech news page, confirm company names no longer filtered
-- [ ] Verify "DOGE" filtering doesn't false-positive on non-government "doge" references (case-sensitive regex)
-
-### Curl Analysis Script
 ```bash
-node .ai/tmp/test-container-rules.js
+git push origin master
 ```
-- [ ] Review output to identify sites where R-rules don't fire — candidates for SITE_OVERRIDES

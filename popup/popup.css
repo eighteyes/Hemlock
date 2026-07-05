@@ -143,6 +143,41 @@ main {
 
 /* Stats */
 
+.stats-scope {
+  display: flex;
+  gap: 0;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.scope-btn {
+  flex: 1;
+  padding: 6px 0;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  background: var(--bg-alt);
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.scope-btn:first-child {
+  border-right: 1px solid var(--border);
+}
+
+.scope-btn:hover {
+  color: var(--fg);
+}
+
+.scope-btn.active {
+  background: var(--accent-dim);
+  color: var(--fg-strong);
+}
+
 #stats-summary {
   padding: 6px 0 10px;
   font-family: var(--font-display);
@@ -635,7 +670,13 @@ input[type="checkbox"]:checked::after {
 footer {
   padding: 10px 16px;
   border-top: 1px solid var(--border-subtle);
-  text-align: center;
+}
+
+.footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 footer a {
@@ -648,4 +689,40 @@ footer a {
 
 footer a:hover {
   color: var(--accent);
+}
+
+#paused-banner {
+  font-size: 11px;
+  color: var(--danger);
+  text-align: center;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding-bottom: 6px;
+}
+
+#btn-disable-reload {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--fg-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  padding: 0;
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+
+#btn-disable-reload:hover {
+  color: var(--danger);
+}
+
+#btn-disable-reload.paused {
+  color: var(--accent);
+}
+
+#btn-disable-reload.paused:hover {
+  color: var(--accent);
+  opacity: 0.8;
 }

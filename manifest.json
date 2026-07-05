@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Hemlock",
   "version": "3.0.0",
-  "description": "A measured dose of silence — remove references to specified people from web pages.",
+  "description": "A precise dose of silence — remove references to specified people from web pages.",
   "permissions": ["storage", "activeTab", "contextMenus"],
   "action": {
     "default_popup": "popup/popup.html",
